@@ -1,0 +1,5 @@
+This is a mirror of http://www.vim.org/scripts/script.php?script_id=1266
+
+This is really just a foldexpr function and a few syntax lines.  If you have ever used outline-mode in Emacs, then using this will be obvious.  Just use vim's fold manipulation commands to expand and collapse sections.
+
+For the rest, it's really just like any other type of outline mode, except that it uses asterisks at the beginning of a line to indicate the level of the section, as opposed to numerical indexes.  This is very convenient when you'd like to be able to organize information, and also be able to easily RE-organize it without changing a bunch of numbers around.  Good for keeping notes on several topics in one file.   ...or for whatever.  :)
