@@ -1,5 +1,7 @@
 "
-" File: syntax/outline.vim
+" Script: syntax/outline.vim
+"
+" Version: 2.0
 "
 " Description:
 "
@@ -25,6 +27,15 @@
 "
 " History:
 "
+"   Version 2.0:
+"
+"       - Rewritten to use syntax-folding instead of a fold expression
+"       - Eliminated slowness in folds with large amounts of text
+"
+"   Version 1.2:
+"
+"       - Updated regexes for readability, using a number for the '*' count
+"
 "   Version 1.1:
 "
 "       - Initial version
@@ -32,47 +43,63 @@
 
 
 "
-" Highlighting for the section header lines.  Add to these for more levels.
+" Do folding with syntax.  This works pretty darn well, and is simpler than a
+" complicated foldexpr.
 "
-syn match Outline_1   /^\*\{1\}[^*].*$/
-syn match Outline_2   /^\*\{2\}[^*].*$/
-syn match Outline_3   /^\*\{3\}[^*].*$/
-syn match Outline_4   /^\*\{4\}[^*].*$/
+" - An outline block starts with a '*' and ends when approaching another '*'
+"   at the beginning of a line.
+"
+" - An outline block can contain any outline block of a lower level.  So, a
+"   level 3 can be inside a level 1 without the intermediary level 2.
+"
+" - A '_' can end a block, allowing one to insert extra space between two
+"   folds.
+"
 
-hi! default link Outline_1 Comment
-hi! default link Outline_2 Identifier
-hi! default link Outline_3 PreProc
-hi! default link Outline_4 Type
+syn region Outline_1 matchgroup=Outline_1_match
+            \ start='^\*[^*].*$'
+            \ end='\n\ze\n\?\*[^*]\|^<$'
+            \ fold keepend
+
+syn region Outline_2 matchgroup=Outline_2_match
+            \ start='^\*\{2\}[^*].*$'
+            \ end='\n\ze\n\?\*\{1,2\}[^*]\|^<\{2\}$'
+            \ containedin=Outline_1,Outline_2
+            \ fold keepend
+
+syn region Outline_3 matchgroup=Outline_3_match
+            \ start='^\*\{3\}[^*].*$'
+            \ end='\n\ze\n\?\*\{1,3\}[^*]\|^<\{3\}$'
+            \ containedin=Outline_1,Outline_2,Outline_3
+            \ fold keepend
+
+syn region Outline_4 matchgroup=Outline_4_match
+            \ start='^\*\{4\}[^*].*$'
+            \ end='\n\ze\n\?\*\{1,4\}[^*]\|^<\{4\}$'
+            \ containedin=Outline_1,Outline_2,Outline_3,Outline_4
+            \ fold keepend
 
 
 
+""" Debugging: Hilight the whole block so we can see exactly what is being
+"""            done.
+"hi Outline_1 guibg=gray40
+"hi Outline_2 guibg=#330000
+"hi Outline_3 guibg=#003300
+"hi Outline_4 guibg=#000033
+"" Disable
+""hi Outline_1 guibg=bg
+""hi Outline_2 guibg=bg
+""hi Outline_3 guibg=bg
+""hi Outline_4 guibg=bg
 
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+hi! default link Outline_1_match Comment
+hi! default link Outline_2_match Identifier
+hi! default link Outline_3_match PreProc
+hi! default link Outline_4_match Type
 
+syn sync fromstart
+setlocal fdm=syntax
 
-setl foldmethod=expr
-setl foldexpr=OutlineFoldFunc()
-
-function! OutlineFoldFunc()
-    let line = getline(v:lnum)
-    " If the current line starts with a '*', then this is the start of a fold.
-    if line =~ '^\*'
-        return ">" . matchend(line, "^\**")
-    else
-        " Since this is not the start of a fold, see if this is the END of
-        " one.  We are at the end of a fold when the next line has nothing but
-        " whitespace, and the following line is the start of a fold.  We look
-        " two lines ahead so we can display only the LAST blank line.  If
-        " there are no blank lines, then the start of the next fold will
-        " automatically end this one.
-        let line2 = getline(v:lnum+1)
-        if line2 =~ '^\s*$'
-            let line3 = getline(v:lnum+2)
-            if line3 =~ '^\*'
-                return "<" . matchend(line3, "^\**")
-            endif
-        endif
-    endif
-    return "="  " fold-level has not changed
-endfunction
+finish
 
